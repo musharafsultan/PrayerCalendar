@@ -59,12 +59,46 @@ def get_welcome_response():
         card_title, speech_output, reprompt_text, should_end_session))
 
 
+def get_invalid_request():
+    """ If we wanted to initialize the session to have some attributes we could add those here """
+
+    session_attributes = {}
+    card_title = "Welcome"
+    speech_output = "Please tell me which prayer you would like to know the time for by saying, " \
+                    "prayer time for Fajr."
+
+    # If the user says something that is not understood, they will be prompted again with this text.
+    reprompt_text = "Please tell me which prayer you would like to know the time for by saying, " \
+                    "prayer time for Fajr."
+
+    should_end_session = False
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
+
+
 def get_prayer_time(intent, session):
     """ If we wanted to initialize the session to have some attributes we could add those here """
     session_attributes = {}
     reprompt_text = None
 
+    if intent['slots'] is None:  # no slots provided
+        return get_invalid_request()
+
+    if 'PrayerType' not in intent['slots']:  # no prayer type provided
+        return get_invalid_request()
+
+    if 'value' not in intent['slots']['PrayerType']:  # no prayer type value provided
+        return get_invalid_request()
+    
     prayer_type = intent['slots']['PrayerType']['value']
+
+    prayer_type_transformed = prayer_type
+    if prayer_type_transformed == "asr":
+        prayer_type_transformed = "asr1"
+    prayer_type_transformed = prayer_type_transformed.lower()
+
+    if prayer_type_transformed not in ["fajr", "sunrise", "dhur", "asr", "maghrib", "isha"]:
+        return get_invalid_request()
 
     dynamodb = resource('dynamodb')
     table = dynamodb.Table('PrayerTimetable')
@@ -83,12 +117,6 @@ def get_prayer_time(intent, session):
         item = response['Item']
         print("GetItem succeeded:")
         print(json.dumps(item))
-
-    prayer_type_transformed = prayer_type
-    if prayer_type_transformed == "asr":
-        prayer_type_transformed = "asr1"
-
-    prayer_type_transformed = prayer_type_transformed.lower()
 
     print("prayer_type_transformed: " + prayer_type_transformed)
 
