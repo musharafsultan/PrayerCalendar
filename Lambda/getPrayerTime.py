@@ -88,6 +88,8 @@ def get_prayer_time(intent, session):
     if prayer_type_transformed == "asr":
         prayer_type_transformed = "asr1"
 
+    prayer_type_transformed = prayer_type_transformed.lower()
+
     print("prayer_type_transformed: " + prayer_type_transformed)
 
     card_title = prayer_type.capitalize() + " Time"
